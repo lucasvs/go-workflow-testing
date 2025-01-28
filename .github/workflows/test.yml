@@ -1,10 +1,12 @@
-name: Run Tests
+name: Test API with PostgreSQL
 
 on:
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
   test:
@@ -12,49 +14,48 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:13
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
         ports:
           - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: test123
-          POSTGRES_DB: testdb
         options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-timeout=30s
+          --health-retries=3
 
     steps:
-      # Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # Set up Go environment
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v2
         with:
-          go-version: 1.22  # Substitua pela versão do Go que você está usando
+          go-version: '1.22'
 
-      # Install dependencies
-      - name: Install Dependencies
-        run: go mod tidy
-
-      # Wait for the database to be ready
-      - name: Wait for Postgres
+      - name: Install dependencies
         run: |
-          for i in {1..10}; do
-            if pg_isready -h localhost -p 5432 -U postgres; then
-              echo "Postgres is ready"
-              exit 0
-            fi
-            echo "Waiting for Postgres..."
-            sleep 5
-          done
-          exit 1
+          go mod tidy
+          go mod vendor
 
-      # Run the tests
-      - name: Run Tests
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U testuser; do
+            echo "Waiting for database to be ready..."
+            sleep 2
+          done
+
+      - name: Run API server in the background
+        run: |
+          DB_URL=postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable go run main.go &
         env:
-          DB_URL: postgres://postgres:test123@localhost:5432/testdb?sslmode=disable
-        run: go test -v ./...
+          DB_URL: postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable
+
+      - name: Run tests
+        run: |
+          go test ./tests/api_test.go -v
+
+      - name: Clean up
+        run: kill $(lsof -t -i:8080) || true

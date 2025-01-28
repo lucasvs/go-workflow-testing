@@ -55,5 +55,9 @@ func main() {
 		c.JSON(http.StatusOK, book)
 	})
 
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
 	r.Run(":8080") // Start the server on port 8080
 }

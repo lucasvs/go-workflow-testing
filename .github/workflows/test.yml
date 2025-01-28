@@ -27,7 +27,9 @@ jobs:
           --health-retries=3
 
       api:
-        build: .
+        build:
+          context: .
+          dockerfile: Dockerfile # Aqui, especifique explicitamente o caminho do Dockerfile
         ports:
           - 8080:8080
         options: >-
@@ -59,10 +61,16 @@ jobs:
       - name: Set DB_URL environment variable
         run: echo "DB_URL=postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable" >> $GITHUB_ENV
 
+      - name: Run API server in the background
+        run: |
+          go run main.go &
+        env:
+          DB_URL: postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable
+
       - name: Wait for API to be ready
         run: |
           echo "Waiting for API to start..."
-          until curl --silent --fail http://api:8080; do
+          until curl --silent --fail http://localhost:8080/health; do
             echo "Waiting for server to be ready..."
             sleep 2
           done
@@ -70,3 +78,6 @@ jobs:
       - name: Run tests
         run: |
           go test ./tests/api_test.go -v
+
+      - name: Clean up
+        run: kill $(lsof -t -i:8080) || true

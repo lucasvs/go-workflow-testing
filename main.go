@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -27,6 +28,13 @@ func main() {
 		panic("Failed to connect to the database: " + err.Error())
 	}
 	defer db.Close()
+
+	// Testa a conexão ao banco
+	err = db.Ping()
+	if err != nil {
+		panic("Failed to ping database: " + err.Error())
+	}
+	fmt.Println("Database connection successful")
 
 	r := gin.Default()
 

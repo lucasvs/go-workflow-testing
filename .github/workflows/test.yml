@@ -52,7 +52,7 @@ jobs:
 
       - name: Run API server in the background
         run: |
-          go run main.go &
+          nohup go run main.go &
         env:
           DB_URL: postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable
 

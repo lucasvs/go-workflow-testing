@@ -59,7 +59,7 @@ func TestCreateBookViaAPI(t *testing.T) {
 	defer db.Close()
 
 	// URL da API que está rodando no container
-	apiURL := "http://api:8080" // Substitua pelo endereço correto se necessário
+	apiURL := "http://localhost:8080" // Substitua pelo endereço correto se necessário
 
 	// Dados do livro a ser criado
 	newBook := `{"title": "1984", "author": "George Orwell", "year": 1949}`

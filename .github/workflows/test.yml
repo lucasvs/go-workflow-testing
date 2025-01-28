@@ -47,9 +47,12 @@ jobs:
             sleep 2
           done
 
+      - name: Set DB_URL environment variable
+        run: echo "DB_URL=postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable" >> $GITHUB_ENV
+
       - name: Run API server in the background
         run: |
-          DB_URL=postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable go run main.go &
+          go run main.go &
         env:
           DB_URL: postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable
 

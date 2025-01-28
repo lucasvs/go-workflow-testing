@@ -56,6 +56,14 @@ jobs:
         env:
           DB_URL: postgres://testuser:testpassword@localhost:5432/testdb?sslmode=disable
 
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to start..."
+          until curl --silent --fail http://localhost:8080; do
+            echo "Waiting for server to be ready..."
+            sleep 2
+          done
+
       - name: Run tests
         run: |
           go test ./tests/api_test.go -v
